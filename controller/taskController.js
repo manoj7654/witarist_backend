@@ -12,10 +12,25 @@ const addTask=async(req,res)=>{
 }
 const getTask=async(req,res)=>{
   try {
+    // Fetch tasks
     const tasks = await TaskModal.find();
-    res.json(tasks);
+
+    // Sort tasks by priority (high to low)
+    tasks.sort((a, b) => {
+      const priorityOrder = { high: 3, medium: 2, low: 1 };
+      return priorityOrder[b.priority] - priorityOrder[a.priority];
+    });
+
+    // Update tasks with priority
+    tasks.forEach(async (task, index) => {
+      const priority = index < tasks.length / 3 ? 'high' : index < (2 * tasks.length) / 3 ? 'medium' : 'low';
+      task.priority = priority;
+      await task.save();
+    });
+     res.json(tasks);
+    console.log('Tasks prioritized successfully');
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Error prioritizing tasks:', err.message);
   }
 }
 const updateTask=async(req,res)=>{
@@ -39,28 +54,4 @@ const deleteTask=async(req,res)=>{
       }
 }
 
-const prioritizeTasks =async(req,res)=>{
-  try {
-    // Fetch tasks
-    const tasks = await Task.find();
-
-    // Sort tasks by priority (high to low)
-    tasks.sort((a, b) => {
-      const priorityOrder = { high: 3, medium: 2, low: 1 };
-      return priorityOrder[b.priority] - priorityOrder[a.priority];
-    });
-
-    // Update tasks with priority
-    tasks.forEach(async (task, index) => {
-      const priority = index < tasks.length / 3 ? 'high' : index < (2 * tasks.length) / 3 ? 'medium' : 'low';
-      task.priority = priority;
-      await task.save();
-    });
-
-    console.log('Tasks prioritized successfully');
-  } catch (err) {
-    console.error('Error prioritizing tasks:', err.message);
-  }
-}
-
-module.exports={addTask,getTask,deleteTask,updateTask,prioritizeTasks}
+module.exports={addTask,getTask,deleteTask,updateTask}
